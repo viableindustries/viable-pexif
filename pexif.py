@@ -204,7 +204,7 @@ class StartOfScanSegment(DefaultSegment):
                 if img_data[i:i + 2] == EOI_MARKER:
                     break
             else:
-                raise JpegFile.InvalidFile("Unable to find EOI marker.")
+                raise(JpegFile.InvalidFile("Unable to find EOI marker."))
             remaining = len(img_data) - i
 
         self.img_data = img_data[:-remaining]
@@ -303,11 +303,11 @@ class IfdData(object):
         for key, entry in self.embedded_tags.items():
             if entry[0] == name:
                 if not isinstance(value, entry[1]):
-                    raise TypeError("Values assigned to '{}' must be instances of {}".format(entry[0], entry[1]))
+                    raise(TypeError("Values assigned to '{}' must be instances of {}".format(entry[0], entry[1])))
                 self[key] = value
                 return
 
-        raise AttributeError("Invalid attribute '{}'".format(name))
+        raise(AttributeError("Invalid attribute '{}'".format(name)))
 
     def __delattr__(self, name):
         for key, entry in self.tags.items():
@@ -315,14 +315,14 @@ class IfdData(object):
                 del self[key]
                 break
         else:
-            raise AttributeError("Invalid attribute '{}'".format(name))
+            raise(AttributeError("Invalid attribute '{}'".format(name)))
 
     def __getattr__(self, name):
         for key, entry in self.tags.items():
             if entry[1] == name:
                 x = self[key]
                 if x is None:
-                    raise AttributeError
+                    raise(AttributeError)
                 return x
         for key, entry in self.embedded_tags.items():
             if entry[0] == name:
@@ -334,8 +334,8 @@ class IfdData(object):
                         self[key] = new
                         return new
                     else:
-                        raise AttributeError
-        raise AttributeError("%s not found.. %s" % (name, self.embedded_tags))
+                        raise(AttributeError)
+        raise(AttributeError("%s not found.. %s" % (name, self.embedded_tags)))
 
     def __getitem__(self, key):
         if type(key) == type(""):
@@ -366,7 +366,7 @@ class IfdData(object):
             return self.__setattr__(key, value)
         found = 0
         if len(self.tags[key]) < 3:
-            raise "Error: Tags aren't set up correctly, should have tag type."
+            raise("Error: Tags aren't set up correctly, should have tag type.")
         if self.tags[key][2] == ASCII:
             if value is not None and not value.endswith('\0'):
                 value = value + '\0'
@@ -451,7 +451,7 @@ class IfdData(object):
                                                             the_data[i*8:
                                                                      i*8+8])))
                 else:
-                    raise "Can't handle this"
+                    raise("Can't handle this")
 
                 if (byte_size > 4):
                     debug("%s" % actual_data)
@@ -519,7 +519,7 @@ class IfdData(object):
                 for i in range(components):
                     actual_data += pack(e + t, *the_data[i].as_tuple())
             else:
-                raise "Can't handle this", exif_type
+                raise("Can't handle this", exif_type)
             if (byte_size) > 4:
                 output_data += actual_data
                 actual_data = pack(e + "I", data_offset)
@@ -629,9 +629,9 @@ def ifd_maker_note(e, offset, exif_file, mode, data):
         header = data[offset:offset+8]
         # Which should be FUJIFILM
         if header != "FUJIFILM":
-            raise JpegFile.InvalidFile("This is FujiFilm JPEG. "
+            raise(JpegFile.InvalidFile("This is FujiFilm JPEG. "
                                        "Expecting a makernote header "
-                                       "<FUJIFILM>. Got <%s>." % header)
+                                       "<FUJIFILM>. Got <%s>." % header))
         # The it has its own offset
         ifd_offset = unpack("<I", data[offset+8:offset+12])[0]
         # and it is always litte-endian
@@ -648,7 +648,7 @@ def ifd_maker_note(e, offset, exif_file, mode, data):
         else:
             msg = "Unknown maker: %s. Skipping." % exif_file.make
             exc = JpegFile.SkipTag
-        raise exc(msg)
+        raise(exc(msg))
 
 
 class IfdGPS(IfdData):
@@ -804,7 +804,7 @@ class IfdTIFF(IfdData):
 
     def new_gps(self):
         if hasattr(self, 'GPSIFD'):
-            raise ValueError("Already have a GPS Ifd")
+            raise(ValueError("Already have a GPS Ifd"))
         assert self.mode == "rw"
         gps = IfdGPS(self.e, 0, self.mode, self.exif_file)
         self.GPSIFD = gps
@@ -823,13 +823,13 @@ class IfdThumbnail(IfdTIFF):
             if (tag == 0x202):
                 size = val[0]
         if size is None or offset is None:
-            raise JpegFile.InvalidFile("Thumbnail doesn't have an offset "
-                                       "and/or size")
+            raise(JpegFile.InvalidFile("Thumbnail doesn't have an offset "
+                                       "and/or size"))
         object.__setattr__(self, 'jpeg_data', data[offset:offset+size])
         if len(self.jpeg_data) != size:
-            raise JpegFile.InvalidFile("Not enough data for JPEG thumbnail."
+            raise(JpegFile.InvalidFile("Not enough data for JPEG thumbnail."
                                        "Wanted: %d got %d" %
-                                       (size, len(self.jpeg_data)))
+                                       (size, len(self.jpeg_data))))
 
     def extra_ifd_data(self, offset):
         for i in range(len(self.entries)):
@@ -862,8 +862,8 @@ class ExifSegment(DefaultSegment):
         exif = exif.strip('\0')
 
         if (exif != "Exif"):
-            raise self.InvalidSegment("Bad Exif Marker. Got <%s>, "
-                                      "expecting <Exif>" % exif)
+            raise(self.InvalidSegment("Bad Exif Marker. Got <%s>, "
+                                      "expecting <Exif>" % exif))
 
         tiff_data = data[TIFF_OFFSET:]
         data = None  # Don't need or want data for now on.
@@ -874,15 +874,15 @@ class ExifSegment(DefaultSegment):
         elif self.tiff_endian == "MM":
             self.e = ">"
         else:
-            raise JpegFile.InvalidFile("Bad TIFF endian header. Got <%s>, "
+            raise(JpegFile.InvalidFile("Bad TIFF endian header. Got <%s>, "
                                        "expecting <II> or <MM>" %
-                                       self.tiff_endian)
+                                       self.tiff_endian))
 
         tiff_tag, tiff_offset = unpack(self.e + 'HI', tiff_data[2:8])
 
         if (tiff_tag != TIFF_TAG):
-            raise JpegFile.InvalidFile("Bad TIFF tag. Got <%x>, expecting "
-                                       "<%x>" % (tiff_tag, TIFF_TAG))
+            raise(JpegFile.InvalidFile("Bad TIFF tag. Got <%x>, expecting "
+                                       "<%x>" % (tiff_tag, TIFF_TAG)))
 
         # Ok, the header parse out OK. Now we parse the IFDs contained in
         # the APP1 header.
@@ -901,7 +901,7 @@ class ExifSegment(DefaultSegment):
             elif (count == 2):
                 ifd = IfdThumbnail(self.e, offset, self, self.mode, tiff_data)
             else:
-                raise JpegFile.InvalidFile()
+                raise(JpegFile.InvalidFile())
             self.ifds.append(ifd)
 
             # Get next offset
@@ -950,7 +950,7 @@ class ExifSegment(DefaultSegment):
         else:
             primary = self.get_primary()
             if primary is None:
-                raise AttributeError
+                raise(AttributeError)
             return primary
 
     primary = property(_get_property)
@@ -1035,8 +1035,8 @@ class JpegFile:
 
         # The very first thing should be a start of image marker
         if (soi_marker != SOI_MARKER):
-            raise self.InvalidFile("Error reading soi_marker. Got <%s> "
-                                   "should be <%s>" % (soi_marker, SOI_MARKER))
+            raise(self.InvalidFile("Error reading soi_marker. Got <%s> "
+                                   "should be <%s>" % (soi_marker, SOI_MARKER)))
 
         # Now go through and find all the blocks of data
         segments = []
@@ -1044,9 +1044,9 @@ class JpegFile:
             head = input.read(2)
             delim, mark = unpack(">BB", head)
             if (delim != DELIM):
-                raise self.InvalidFile("Error, expecting delimiter. "
+                raise(self.InvalidFile("Error, expecting delimiter. "
                                        "Got <%s> should be <%s>" %
-                                       (delim, DELIM))
+                                       (delim, DELIM)))
             if mark == EOI:
                 # Hit end of image marker, game-over!
                 break
@@ -1124,7 +1124,7 @@ class JpegFile:
         else:
             exif = self.get_exif(False)
             if exif is None:
-                raise AttributeError
+                raise(AttributeError)
             return exif
 
     exif = property(_get_exif)
@@ -1137,8 +1137,8 @@ class JpegFile:
                 (1/60.0 * float(min.num) / min.den) + \
                 (1/3600.0 * float(sec.num) / sec.den)
         if not hasattr(self.exif.primary, 'GPSIFD'):
-            raise self.NoSection, "File %s doesn't have a GPS section." % \
-                self.filename
+            raise(self.NoSection, "File %s doesn't have a GPS section." % \
+                self.filename)
 
         gps = self.exif.primary.GPS
         lat = convert(gps.GPSLatitude)
@@ -1170,7 +1170,7 @@ class JpegFile:
     def set_geo(self, lat, lng):
         """Set the GeoLocation to a given lat and lng"""
         if self.mode != "rw":
-            raise RWError
+            raise(RWError)
 
         gps = self.exif.primary.GPS
 
