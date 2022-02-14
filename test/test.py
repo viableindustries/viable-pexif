@@ -1,6 +1,6 @@
 import unittest
 import pexif
-import StringIO
+from io import StringIO
 import difflib
 
 test_data = [
