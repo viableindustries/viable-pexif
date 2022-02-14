@@ -122,7 +122,7 @@ def debug(*debug_string):
     DEBUG to 1."""
     if DEBUG:
         for each in debug_string:
-            print each,
+            print(each),
         print
 
 
